@@ -1,9 +1,8 @@
 package test;
 
-import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
@@ -13,15 +12,20 @@ import java.nio.ByteBuffer;
  */
 public class JMTestClient {
 
-	OutputStream os = null;
-	InputStream is = null;
+	DataOutputStream os = null;
+	DataInputStream is = null;
 	Socket socket;
 
 	public void connect(String host, int port) throws Exception {
 		try {
 			socket = new Socket(host, port);
-			os = socket.getOutputStream();
-			is = socket.getInputStream();
+			socket.setReuseAddress(true);
+			// 关闭传输缓存，默认为false
+			socket.setTcpNoDelay(true);
+			// 如果输入流等待1000毫秒还未获得服务端发送数据，则提示超时，0为永不超时
+			socket.setSoTimeout(10000);
+			os = new DataOutputStream(socket.getOutputStream());
+			is = new DataInputStream(socket.getInputStream());
 		} catch (Exception e) {
 			// TODO: handle exception
 			throw e;
@@ -39,14 +43,8 @@ public class JMTestClient {
 	}
 
 	public short resev() throws IOException {
-		BufferedInputStream bis = new BufferedInputStream(is);
-		while (bis.available() <= 0) {
-		}
-		byte[] recB = new byte[bis.available()];
-		bis.read(recB);
-		ByteBuffer bb = ByteBuffer.wrap(recB);
-		bb.getShort();
-		short c = bb.getShort();
+		is.readShort();
+		short c = is.readShort();
 		return c;
 	}
 
